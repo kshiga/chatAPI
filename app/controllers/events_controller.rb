@@ -22,9 +22,31 @@ class EventsController < ApplicationController
     if(params.has_key?(:from) && params.has_key?(:to) && params.has_key?(:by))
       @from = DateTime.iso8601(params[:from])
       @to = DateTime.iso8601(params[:to])
+      case params[:by]
+      when "minute"
+        @from = @from.beginning_of_minute
+        @to =  @to.beginning_of_minute
+        @divisions = time_diff(@from, @to, params[:by])
+        @advance = {:minutes}
+      when "hour"
+        @from = @from.beginning_of_hour
+        @to =  @to.beginning_of_hour
+        @divisions = time_diff(@from, @to, params[:by])
+      when "date"
+        @from = @from.beginning_of_day
+        @to =  @to.beginning_of_day
+        @divisions = time_diff(@from, @to, params[:by])
+      else
+        @divisions = 0
+      end
+      (0..@divisions).each do |t|
+      end
+      #Event.where(:date => @from..@to).group(:action).count
 
+    else
+      @events = Event.group(:action).count
     end
-    render json: @events_json_data
+    render json: @events
   end
 
   # GET /events/1
@@ -97,4 +119,18 @@ class EventsController < ApplicationController
         @events_json_data.push(e.getJSONData)
       end
     end
+
+    def time_diff(start_time, end_time, by)
+      seconds_diff =(start_time - end_time).to_i.abs
+      return case by
+      when "minute"
+         seconds_diff / 60
+      when "hour"
+          seconds_diff / 3600
+      when "date"
+         seconds_diff / 86400
+      else
+         0
+      end
+   end
 end

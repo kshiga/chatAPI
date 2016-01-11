@@ -16,8 +16,5 @@ class Event < ActiveRecord::Base
     end
     return _data
   end
-
-  def self.getSummaryData(from, to)
-      self.where(:date => @from..@to).group(:action).count
-  end
+  
 end
