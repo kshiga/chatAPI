@@ -192,8 +192,6 @@
             event.preventDefault();
             var type = $("#get-type").val(),
                 url =  type + "?" + decodeURIComponent($('.' + type).serialize());
-
-            console.log(url);
             jQuery.ajax({
                 'type': 'GET',
                 'url': url,
