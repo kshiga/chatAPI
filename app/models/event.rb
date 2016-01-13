@@ -6,7 +6,7 @@ class Event < ActiveRecord::Base
     _data = {
       "user" => self.user,
       "type" => self.action,
-      "date" => self.date
+      "date" => self.date.strftime("%Y/%m/%d %H:%M:%SZ")
     }
     if(self.action == "highfive")
       _data[:otheruser] = self.otheruser
@@ -16,5 +16,5 @@ class Event < ActiveRecord::Base
     end
     return _data
   end
-  
+
 end

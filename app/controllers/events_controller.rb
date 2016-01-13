@@ -23,33 +23,30 @@ class EventsController < ApplicationController
       @events = []
       @from = DateTime.iso8601(params[:from])
       @to = DateTime.iso8601(params[:to])
-      case params[:by]
+      @by = params[:by]
+
+      case @by
       when "minute"
         @from = @from.beginning_of_minute
         @to =  @to.beginning_of_minute
-        @divisions = time_diff(@from, @to, params[:by])
-        @advance = {:minutes => +1}
+
       when "hour"
         @from = @from.beginning_of_hour
         @to =  @to.beginning_of_hour
-        @divisions = time_diff(@from, @to, params[:by])
-        @advance = {:hours => +1}
       when "date"
         @from = @from.beginning_of_day
         @to =  @to.beginning_of_day
-        @divisions = time_diff(@from, @to, params[:by])
-        @advance = {:days => +1}
       else
         @divisions = 0
       end
+
+      time_diff
+
       (0..@divisions).each do |t|
         @start = @from
         @from = @from.advance(@advance)
-        @events.push(({"date" => @start}).merge(Event.where(:date => @start..@from).group(:action).count.to_h))
-
+        @events.push(({"date" => @start.strftime("%Y/%m/%d %H:%M:%SZ")}).merge(Event.where(:date => @start..@from).group(:action).count.to_h))
       end
-      #
-
     else
       @events = Event.group(:action).count
     end
@@ -127,17 +124,19 @@ class EventsController < ApplicationController
       end
     end
 
-    def time_diff(start_time, end_time, by)
-      seconds_diff = ((start_time - end_time) * 24 * 60 * 60).to_i.abs
-      return case by
+    def time_diff
+      seconds_diff = ((@to - @from) * 24 * 60 * 60).to_i.abs
+      case @by
       when "minute"
-         seconds_diff / 60
+         @divisions = seconds_diff / 60
+         @advance = {:minutes => +1}
       when "hour"
-          seconds_diff / 3600
+          @divisions = seconds_diff / 3600
+          @advance = {:hours => +1}
       when "date"
-         seconds_diff / 86400
+         @advance = {:days => +1}
       else
-         0
+         @divisions = 0
       end
 
    end
