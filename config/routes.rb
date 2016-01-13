@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   resources :events
+  root 'events#ui'
   post 'event' => 'events#create'
   get 'summary' => 'events#summary'
   # The priority is based upon order of creation: first created -> highest priority.

@@ -2,6 +2,10 @@ class EventsController < ApplicationController
   skip_before_filter  :verify_authenticity_token
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
+  def ui
+    render 'ui'
+  end
+
   # GET /events
   # GET /events.json
   def index

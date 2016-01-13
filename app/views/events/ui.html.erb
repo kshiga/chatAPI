@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Chat Logger</title>
+
+
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+              <div class="col-md-12 well">
+                  <h1>POST</h1>
+                  <div class="alert alert-success hide" role="alert" id="post-success"><strong>Success</strong> Event was added!</div>
+                  <div class="alert alert-danger hide" role="alert" id="post-error"><strong>Error</strong> Error in adding event!</div>
+                  <form id="chat-post">
+                      <div class="form-group">
+                          <label for="type"> Type </label>
+                          <select name="type" class="form-control enter comment highfive leave" id="type" >
+                              <option value="enter">Enter</option>
+                              <option value="comment">Comment</option>
+                              <option value="highfive">High Five</option>
+                              <option value="leave">Leave</option>
+                          </select>
+                      </div>
+                      <div class="form-group">
+                          <label for="user"> User </label>
+                          <select name="user" class="form-control enter comment highfive leave" id="user">
+                              <option value="A">A</option>
+                              <option value="B">B</option>
+                              <option value="C">C</option>
+                              <option value="D">D</option>
+                          </select>
+                      </div>
+                      <div class="form-group hide" id="other-user-group">
+                          <label for="otheruser"> Other User </label>
+                          <select name="otheruser" class="form-control highfive" id="otheruser">
+                              <option value="A">A</option>
+                              <option value="B">B</option>
+                              <option value="C">C</option>
+                              <option value="D">D</option>
+                          </select>
+                      </div>
+                      <div class="form-group hide" id="message-group">
+                          <label for="message"> Message </label>
+                          <textarea name="message" class="form-control comment" id="message" rows="5"></textarea>
+                      </div>
+                      <input type="submit" class="pull-right btn btn-primary">
+                  </form>
+                  <br>
+              </div>
+              <div class="col-md-12 well">
+                  <h1>GET</h1>
+                  <form id="chat-get">
+                    <div class="form-group col-md-12">
+                      <label for="get-type">Return Format</label>
+                      <select name="get-type" id="get-type" class="form-control">
+                        <option value="events">Events List</option>
+                        <option value="summary">Summary</option>
+                      </select>
+                    </div>
+                    <div class="form-group hide col-md-12" id="summary-sort-container">
+                      <label for="by">Timeframe for Summary</label>
+                      <select name="by" id="by" class="form-control summary">
+                        <option value="minute">By Minute</option>
+                        <option value="hour">By Hour</option>
+                        <option value="date">By Date</option>
+                      </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label for="from">Datetime From</label>
+                      <input type="text" id="from" name="from" class="form-control summary events">
+                    </div>
+                    <div class="form-group col-md-4 col-md-offset-3">
+                      <label for="to">Datetime To</label>
+                      <input type="text" id="to" name="to" class="form-control summary events">
+                    </div>
+                    <div class="clearfix"></div>
+                    <input type="submit" class="pull-right btn btn-primary">
+                  </form>
+                  <br><br>
+                  <textarea id="results" class="form-control" rows="5" placeholder="Results"></textarea>
+              </div>
+      </div>
+    </div>
+      <!-- Latest compiled and minified JavaScript -->
+      <script>
+
+          function getFormData($form){
+              var unindexed_array = $form.serializeArray();
+              var indexed_array = {};
+
+              $.map(unindexed_array, function(n, i){
+                  indexed_array[n['name']] = n['value'];
+              });
+
+              return indexed_array;
+          }
+          function toShortISOString(date) {
+              return date.getUTCFullYear() +
+              "-" + (date.getUTCMonth() + 1) +
+              "-" + date.getUTCDate() +
+              "T" + date.getUTCHours() +
+              ":" + date.getUTCMinutes() +
+              ":" + date.getUTCSeconds() +
+              //Remove the milliseconds.
+              //"." + String( (this.getUTCMilliseconds()/1000).toFixed(3)).slice(2, 5) +
+              "Z";
+          }
+          $.postJSON = function(url, data, callback) {
+              return jQuery.ajax({
+                  'type': 'POST',
+                  'url': url,
+                  'contentType': 'application/json',
+                  'data': JSON.stringify(data),
+                  'dataType': 'json',
+                  'success': callback
+              });
+          };
+          $(function () {
+
+          $('#from').datetimepicker({
+            format: "YYYY-MM-DDTHH:mm:ss[Z]"
+          });
+          $('#to').datetimepicker({
+            format: "YYYY-MM-DDTHH:mm:ss[Z]"
+          });
+        });
+
+          $("#type").change(function(event){
+              var type = $(event.target).val();
+              switch(type){
+                case "enter":
+                case "leave":
+                    $("#other-user-group, #message-group").addClass('hide');
+                break;
+                case "highfive":
+                    $("#other-user-group").removeClass('hide');
+                    $("#message-group").addClass('hide');
+                break;
+                case "comment":
+                    $("#other-user-group").addClass('hide');
+                    $("#message-group").removeClass('hide');
+                break;
+
+              }
+          });
+          $("#chat-post").submit(function(event){
+            event.preventDefault();
+            var type = $("#type").val(),
+                data = getFormData($("#chat-post").find('.'+type)),
+                date = new Date();
+            data.date =  toShortISOString(date);
+            $.postJSON("/event", data, function(res){
+              if(res.status && res.status == "ok"){
+                $("#chat-post")[0].reset();
+                $("#other-user-group, #message-group").addClass('hide');
+
+                if($("#post-success").hasClass('hide')){
+                  $("#post-success").removeClass('hide')
+                } else {
+                  $("#post-success").slideToggle()
+                }
+
+
+                setTimeout(function(){
+                  $("#post-success").slideToggle();
+                }, 2000)
+              } else {
+                if($("#post-error").hasClass('hide')){
+                  $("#post-error").removeClass('hide')
+                } else {
+                  $("#post-error").slideToggle()
+                }
+                setTimeout(function(){
+                  $("#post-error").slideToggle();
+                }, 2000)
+              }
+            });
+
+          });
+
+          $("#get-type").change(function(event){
+            if($(event.target).val() == "summary"){
+              $("#summary-sort-container").removeClass('hide')
+            } else {
+              $("#summary-sort-container").addClass('hide')
+            }
+          });
+
+          $("#chat-get").submit(function(event){
+            event.preventDefault();
+            var type = $("#get-type").val(),
+                url =  type + "?" + decodeURIComponent($('.' + type).serialize());
+
+            console.log(url);
+            jQuery.ajax({
+                'type': 'GET',
+                'url': url,
+                'dataType': 'json',
+                'success': function(res){
+                  $("#results").html(JSON.stringify(res, null, 2))
+                }
+            });
+          });
+
+      </script>
+  </body>
+
+</html>
