@@ -20,7 +20,7 @@ class EventsController < ApplicationController
 
   def summary
     if(params.has_key?(:from) && params.has_key?(:to) && params.has_key?(:by))
-      @vents = []
+      @events = []
       @from = DateTime.iso8601(params[:from])
       @to = DateTime.iso8601(params[:to])
       case params[:by]
@@ -44,8 +44,8 @@ class EventsController < ApplicationController
       end
       (0..@divisions).each do |t|
         @start = @from
-        @from.advance(@advance)
-        @events.push(Event.where(:date => @start..@from).group(:action).count).to_h.merge({"date"=> @start}))
+        @from = @from.advance(@advance)
+        @events.push(({"date" => @start}).merge(Event.where(:date => @start..@from).group(:action).count.to_h))
 
       end
       #
@@ -128,7 +128,7 @@ class EventsController < ApplicationController
     end
 
     def time_diff(start_time, end_time, by)
-      seconds_diff =(start_time - end_time).to_i.abs
+      seconds_diff = ((start_time - end_time) * 24 * 60 * 60).to_i.abs
       return case by
       when "minute"
          seconds_diff / 60
@@ -139,5 +139,6 @@ class EventsController < ApplicationController
       else
          0
       end
+
    end
 end
