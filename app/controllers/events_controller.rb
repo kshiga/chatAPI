@@ -25,21 +25,21 @@ class EventsController < ApplicationController
   def summary
     if(params.has_key?(:from) && params.has_key?(:to) && params.has_key?(:by))
       @events = []
-      @from = DateTime.iso8601(params[:from])
-      @to = DateTime.iso8601(params[:to])
+      @from_original = DateTime.iso8601(params[:from])
+      @to_original = DateTime.iso8601(params[:to])
       @by = params[:by]
 
       case @by
       when "minute"
-        @from = @from.beginning_of_minute
-        @to =  @to.beginning_of_minute
+        @from = @from_original.beginning_of_minute
+        @to =  @to_original.beginning_of_minute
 
       when "hour"
-        @from = @from.beginning_of_hour
-        @to =  @to.beginning_of_hour
+        @from = @from_original.beginning_of_hour
+        @to =  @to_original.beginning_of_hour
       when "date"
-        @from = @from.beginning_of_day
-        @to =  @to.beginning_of_day
+        @from = @from_original.beginning_of_day
+        @to =  @to_original.beginning_of_day
       else
         @divisions = 0
       end
@@ -47,8 +47,8 @@ class EventsController < ApplicationController
       time_diff
 
       (0..@divisions).each do |t|
-        @start = @from
-        @from = @from.advance(@advance)
+        @start = t === 0 ? @from_original : @from
+        @from = t === @divisions ? @to_original : @from.advance(@advance)
         @events.push(({"date" => @start.strftime("%Y/%m/%d %H:%M:%SZ")}).merge(Event.where(:date => @start..@from).group(:action).count.to_h))
       end
     else
